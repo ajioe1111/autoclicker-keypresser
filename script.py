@@ -75,17 +75,20 @@ def toggle_key(hwnd, key, key_code):
         threading.Thread(target=press_inactive_key, args=(hwnd, key_code), daemon=True).start()
 
 
-def setup_mouse_and_key_hooks(hwnd):
+def setup_mouse_and_key_hooks(hwnd=None):
     """Настройка горячих клавиш для мыши и клавиатуры."""
-    mouse.on_button(
-        lambda: toggle_holding(hwnd) if keyboard.is_pressed('alt') else None,
-        buttons=('left',),
-        types=('down',)
-    )
+    if hwnd:
+        mouse.on_button(
+            lambda: toggle_holding(hwnd) if keyboard.is_pressed('alt') else None,
+            buttons=('left',),
+            types=('down',)
+        )
 
-    keyboard.add_hotkey("alt+w", lambda: toggle_key(hwnd, "W", 0x57))  # VK_CODE для W
-    keyboard.add_hotkey("alt+s", lambda: toggle_key(hwnd, "S", 0x53))  # VK_CODE для S
-    keyboard.add_hotkey("alt+e", lambda: toggle_key(hwnd, "E", 0x45))  # VK_CODE для E
+        keyboard.add_hotkey("alt+w", lambda: toggle_key(hwnd, "W", 0x57))  # VK_CODE для W
+        keyboard.add_hotkey("alt+s", lambda: toggle_key(hwnd, "S", 0x53))  # VK_CODE для S
+        keyboard.add_hotkey("alt+e", lambda: toggle_key(hwnd, "E", 0x45))  # VK_CODE для E
+    else:
+        print("Горячие клавиши работают, но окно игры не найдено.")
 
 
 def reset_all():
@@ -106,7 +109,7 @@ def update_active_actions():
         active_list.insert(tk.END, "Нет активных действий")
 
 
-def create_interface(hwnd):
+def create_interface(hwnd=None):
     """Создание графического интерфейса."""
     global status_label, active_list
 
@@ -117,7 +120,14 @@ def create_interface(hwnd):
     root.resizable(False, False)  # Запрет на изменение размера
 
     # Метка состояния
-    status_label = tk.Label(root, text="Статус: Управление", font=("Arial", 14), fg="blue")
+    if hwnd:
+        status_text = "Статус: Управление"
+        status_color = "blue"
+    else:
+        status_text = "Статус: Окно не найдено"
+        status_color = "red"
+
+    status_label = tk.Label(root, text=status_text, font=("Arial", 14), fg=status_color)
     status_label.pack(pady=10)
 
     # Список активных действий
@@ -162,12 +172,11 @@ def main():
     game_title = "War"  # Укажите часть названия окна игры
     window = find_game_window(game_title)
 
+    hwnd = window._hWnd if window else None
     if not window:
         print("Игра не найдена. Убедитесь, что окно запущено.")
-        return
-
-    hwnd = window._hWnd
-    print(f"Найдено окно: {window.title}")
+    else:
+        print(f"Найдено окно: {window.title}")
 
     # Настраиваем горячие клавиши мыши и клавиатуры
     setup_mouse_and_key_hooks(hwnd)
